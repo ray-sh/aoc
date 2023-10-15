@@ -1,0 +1,136 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# AOC
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("data")
+```
+
+```elixir
+{numbers, boards} =
+  Kino.Input.read(input)
+  |> String.split("\n", trim: true)
+  |> then(fn [n | rest] ->
+    {String.split(n, ","),
+     Enum.map(rest, &String.split/1) |> Enum.chunk_every(5, 5) |> Enum.map(&List.flatten/1)}
+  end)
+
+marks = List.duplicate([], length(boards))
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [],
+ [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [],
+ ...]
+```
+
+```elixir
+defmodule Aoc4 do
+  def play_part2([n | rest], boards, marks, last_board_index) do
+    # generate marks for all boards
+    marks =
+      for {board, mark} <- Enum.zip(boards, marks) do
+        index = Enum.find_index(board, fn e -> e == n end)
+        if index, do: [index | mark], else: mark
+      end
+
+    cond do
+      Enum.count(marks, &binggo/1) == length(boards) ->
+        score([n, boards, marks, last_board_index])
+
+      Enum.count(marks, &binggo/1) == length(boards) - 1 ->
+        last_board_index = Enum.find_index(marks, fn mark -> !Aoc4.binggo(mark) end)
+        play_part2(rest, boards, marks, last_board_index)
+
+      true ->
+        play_part2(rest, boards, marks, last_board_index)
+    end
+  end
+
+  def play([n | rest], boards, marks) do
+    # generate marks for all boards
+    marks =
+      for {board, mark} <- Enum.zip(boards, marks) do
+        index = Enum.find_index(board, fn e -> e == n end)
+        if index, do: [index | mark], else: mark
+      end
+
+    if Enum.any?(marks, &binggo/1) do
+      [n, boards, marks, nil]
+      |> score()
+    else
+      play(rest, boards, marks)
+    end
+  end
+
+  def score([n, boards, marks, last_board_index]) do
+    matched_index = last_board_index || Enum.find_index(marks, &Aoc4.binggo/1)
+
+    if matched_index do
+      board = Enum.at(boards, matched_index)
+      mask = Enum.at(marks, matched_index)
+
+      Enum.map(mask, &(Enum.at(board, &1) |> String.to_integer()))
+      |> Enum.sum()
+      |> then(fn s -> (Enum.map(board, &String.to_integer/1) |> Enum.sum()) - s end)
+      |> Kernel.*(String.to_integer(n))
+    else
+      {:error, n, boards, marks}
+    end
+  end
+
+  def binggo(mark) do
+    for sign <- [
+          0..4,
+          5..9,
+          10..14,
+          15..19,
+          20..24,
+          [0, 5, 10, 15, 20],
+          [1, 6, 11, 16, 21],
+          [2, 7, 12, 17, 22],
+          [3, 8, 13, 18, 23],
+          [4, 9, 14, 19, 24]
+        ] do
+      MapSet.subset?(MapSet.new(sign), MapSet.new(mark))
+    end
+    |> Enum.any?()
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Aoc4, <<70, 79, 82, 49, 0, 0, 22, ...>>, {:binggo, 1}}
+```
+
+```elixir
+Aoc4.play(numbers, boards, marks)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+63424
+```
+
+```elixir
+Aoc4.play_part2(numbers, boards, marks, nil)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+23541
+```
