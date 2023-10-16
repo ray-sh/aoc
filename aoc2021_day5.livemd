@@ -1,0 +1,56 @@
+# aoc2021 day5
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("input:")
+```
+
+```elixir
+points =
+  Kino.Input.read(input)
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn line ->
+    String.split(line, [" -> ", ","])
+    |> Enum.map(&String.to_integer(&1))
+    |> List.to_tuple()
+  end)
+```
+
+```elixir
+points =
+  Enum.map(points, fn
+    {x1, y, x2, y} ->
+      for x <- x1..x2 do
+        {x, y}
+      end
+
+    {x, y1, x, y2} ->
+      for y <- y1..y2 do
+        {x, y}
+      end
+
+    {x1, y1, x2, y2} ->
+      if abs(x2 - x1) == abs(y2 - y1) do
+        Enum.zip(x1..x2, y1..y2)
+      else
+        IO.inspect({:umatch, {x1, y1, x2, y2}})
+        []
+      end
+  end)
+  |> List.flatten()
+```
+
+```elixir
+for point <- points, reduce: %{} do
+  acc -> Map.update(acc, point, 1, &(&1 + 1))
+end
+|> Map.values()
+|> Enum.count(fn e -> e > 1 end)
+```
