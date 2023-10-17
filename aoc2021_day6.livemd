@@ -1,0 +1,88 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# aoc2021_6
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("input")
+```
+
+```elixir
+input = Kino.Input.read(input)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"1,1,1,2,1,1,2,1,1,1,5,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,4,1,1,1,1,3,1,1,3,1,1,1,4,1,5,1,3,1,1,1,1,1,5,1,1,1,1,1,5,5,2,5,1,1,2,1,1,1,1,3,4,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,5,4,1,1,1,1,1,5,1,2,4,1,1,1,1,1,3,3,2,1,1,4,1,1,5,5,1,1,1,1,1,2,5,1,4,1,1,1,1,1,1,2,1,1,5,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,3,1,1,3,1,3,1,4,1,5,4,1,1,2,1,1,5,1,1,1,1,1,5,1,1,1,1,1,1,1,1,1,4,1,1,4,1,1,1,1,1,1,1,5,4,1,2,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,4,1,1,1,2,1,4,1,1,1,1,1,1,1,1,1,4,2,1,2,1,1,4,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,3,2,1,4,1,5,1,1,1,4,5,1,1,1,1,1,1,5,1,1,5,1,2,1,1,2,4,1,1,2,1,5,5,3"
+```
+
+```elixir
+state =
+  for i <- 0..8, into: %{} do
+    {i, 0}
+  end
+
+fishes =
+  String.split(input, ",")
+  |> Enum.map(&String.to_integer/1)
+  |> Day6.status()
+
+fishes = Map.merge(state, fishes)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{0 => 0, 1 => 225, 2 => 20, 3 => 13, 4 => 20, 5 => 22, 6 => 0, 7 => 0, 8 => 0}
+```
+
+```elixir
+defmodule Day6 do
+  def live(fishes, 0), do: Map.values(fishes) |> Enum.sum()
+
+  def live(fishes, day) do
+    %{
+      0 => Map.get(fishes, 1),
+      1 => Map.get(fishes, 2),
+      2 => Map.get(fishes, 3),
+      3 => Map.get(fishes, 4),
+      4 => Map.get(fishes, 5),
+      5 => Map.get(fishes, 6),
+      6 => Map.get(fishes, 0) + Map.get(fishes, 7),
+      7 => Map.get(fishes, 8),
+      8 => Map.get(fishes, 0)
+    }
+    |> live(day - 1)
+  end
+
+  def status(fishes) do
+    for fish <- fishes, reduce: %{} do
+      acc -> Map.update(acc, fish, 1, &(&1 + 1))
+    end
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Day6, <<70, 79, 82, 49, 0, 0, 10, ...>>, {:status, 1}}
+```
+
+```elixir
+Day6.live(fishes, 256)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1767323539209
+```
