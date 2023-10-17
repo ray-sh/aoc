@@ -33,7 +33,7 @@ state =
 fishes =
   String.split(input, ",")
   |> Enum.map(&String.to_integer/1)
-  |> Day6.status()
+  |> Enum.frequencies()
 
 fishes = Map.merge(state, fishes)
 ```
@@ -61,12 +61,6 @@ defmodule Day6 do
       8 => Map.get(fishes, 0)
     }
     |> live(day - 1)
-  end
-
-  def status(fishes) do
-    for fish <- fishes, reduce: %{} do
-      acc -> Map.update(acc, fish, 1, &(&1 + 1))
-    end
   end
 end
 ```
