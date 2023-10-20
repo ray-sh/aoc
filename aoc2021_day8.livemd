@@ -67,12 +67,6 @@ defmodule Day8 do
     |> Enum.uniq()
   end
 
-  defp unsed_set(sub_set) do
-    MapSet.new(@sigs)
-    |> MapSet.difference(MapSet.new(sub_set))
-    |> MapSet.to_list()
-  end
-
   @doc """
   Generate all possible maps
   """
@@ -80,15 +74,15 @@ defmodule Day8 do
     for r1 <- @sigs,
         r2_left <- List.delete(@sigs, r1),
         r2_right <-
-          unsed_set([r1, r2_left]),
+          @sigs -- [r1, r2_left],
         r3 <-
-          unsed_set([r1, r2_left, r2_right]),
+          @sigs -- [r1, r2_left, r2_right],
         r4_left <-
-          unsed_set([r1, r2_left, r2_right, r3]),
+          @sigs -- [r1, r2_left, r2_right, r3],
         r4_right <-
-          unsed_set([r1, r2_left, r2_right, r3, r4_left]),
+          @sigs -- [r1, r2_left, r2_right, r3, r4_left],
         r5 <-
-          unsed_set([r1, r2_left, r2_right, r3, r4_left, r4_right]) do
+          @sigs -- [r1, r2_left, r2_right, r3, r4_left, r4_right] do
       {r1, r2_left, r2_right, r3, r4_left, r4_right, r5}
     end
   end
@@ -130,7 +124,7 @@ end
 <!-- livebook:{"output":true} -->
 
 ```
-{:module, Day8, <<70, 79, 82, 49, 0, 0, 25, ...>>, {:decode, 2}}
+{:module, Day8, <<70, 79, 82, 49, 0, 0, 24, ...>>, {:decode, 2}}
 ```
 
 ```elixir
