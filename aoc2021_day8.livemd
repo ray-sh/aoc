@@ -1,0 +1,152 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# aoc2021_day8
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("input")
+```
+
+## Part1
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split(["\n", " | "], trim: true)
+|> List.delete_at(0)
+|> Enum.take_every(2)
+|> Enum.reduce(0, fn line, acc ->
+  String.split(line, " ", trim: true)
+  |> Enum.count(fn word -> String.length(word) in [2, 3, 4, 7] end)
+  |> Kernel.+(acc)
+end)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+310
+```
+
+## Part2
+
+```elixir
+defmodule Day8 do
+  @sigs ["a", "b", "c", "d", "e", "f", "g"]
+
+  @doc """
+  All sigs by map
+  """
+  def sigmap_nums({r1, r2_left, r2_right, r3, r4_left, r4_right, r5}) do
+    [
+      r1 <> r2_left <> r2_right <> r4_left <> r4_right <> r5,
+      r2_right <> r4_right,
+      r1 <> r2_right <> r3 <> r4_left <> r5,
+      r1 <> r2_right <> r3 <> r4_right <> r5,
+      r2_left <> r2_right <> r3 <> r4_right,
+      r1 <> r2_left <> r3 <> r4_right <> r5,
+      r1 <> r2_left <> r3 <> r4_left <> r4_right <> r5,
+      r1 <> r2_right <> r4_right,
+      r1 <> r2_left <> r2_right <> r3 <> r4_left <> r4_right <> r5,
+      r1 <> r2_left <> r2_right <> r3 <> r4_right <> r5
+    ]
+    |> Enum.map(&(to_charlist(&1) |> Enum.sort()))
+  end
+
+  def dedup_sigs(line) when is_binary(line) do
+    line
+    |> String.split()
+    |> Enum.map(&(String.to_charlist(&1) |> Enum.sort()))
+    |> Enum.uniq()
+  end
+
+  defp unsed_set(sub_set) do
+    MapSet.new(@sigs)
+    |> MapSet.difference(MapSet.new(sub_set))
+    |> MapSet.to_list()
+  end
+
+  @doc """
+  Generate all possible maps
+  """
+  def sig_maps() do
+    for r1 <- @sigs,
+        r2_left <- List.delete(@sigs, r1),
+        r2_right <-
+          unsed_set([r1, r2_left]),
+        r3 <-
+          unsed_set([r1, r2_left, r2_right]),
+        r4_left <-
+          unsed_set([r1, r2_left, r2_right, r3]),
+        r4_right <-
+          unsed_set([r1, r2_left, r2_right, r3, r4_left]),
+        r5 <-
+          unsed_set([r1, r2_left, r2_right, r3, r4_left, r4_right]) do
+      {r1, r2_left, r2_right, r3, r4_left, r4_right, r5}
+    end
+  end
+
+  @doc """
+  The way to generate map is to read 0-9 sigs, then we could come out the map
+  """
+  def find_map(sigs) do
+    sigs = Day8.dedup_sigs(sigs)
+
+    Enum.find(sig_maps(), fn map ->
+      all_nums = sigmap_nums(map)
+      Enum.all?(sigs, fn sign -> sign in all_nums end)
+    end)
+  end
+
+  @doc """
+  Unit tested
+  map : {"b", "a", "e", "c", "g", "d", "f"}
+  fires : "acedgfb"
+  output : number
+  """
+  def decode(map, fires) do
+    fires = String.split(fires)
+
+    for fire <- fires do
+      fire =
+        String.to_charlist(fire)
+        |> Enum.sort()
+
+      sigmap_nums(map)
+      |> Enum.find_index(&(&1 == fire))
+    end
+    |> Integer.undigits()
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Day8, <<70, 79, 82, 49, 0, 0, 25, ...>>, {:decode, 2}}
+```
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.split(["\n"], trim: true)
+|> Enum.map(&String.split(&1, " | "))
+|> Enum.map(fn [fires, sigs] ->
+  map = Day8.find_map(fires)
+  Day8.decode(map, sigs)
+end)
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+915941
+```
