@@ -121,6 +121,8 @@ defmodule Day9 do
   end
 
   def get_x_y(index, len) do
+    # This will be called much times, maybe we should build the grid 
+    # from start to save the time
     {div(index, len), Integer.mod(index, len)}
   end
 
@@ -128,11 +130,12 @@ defmodule Day9 do
     for {x, y} <- [{x - 1, y}, {x + 1, y}, {x, y - 1}, {x, y + 1}],
         x in 0..(@heigh - 1),
         y in 0..(@width - 1) do
-      {(Enum.at(@input, x) |> Enum.at(y)) - 48, {x, y}}
+      {(Enum.at(@input, x) |> Enum.at(y)) - ?0, {x, y}}
     end
   end
 
   def board(input) do
+    # %{{x,y} => v} struct maybe more efficiency
     List.flatten(input)
     |> Enum.with_index(fn e, index ->
       {e - 48, get_x_y(index, @width)}
@@ -165,8 +168,8 @@ defmodule Day9 do
       |> length()
     end)
     |> Enum.sort(:desc)
-    |> Enum.slice(0..2)
-    |> Enum.reduce(1, fn x, acc -> x * acc end)
+    |> Enum.take(3)
+    |> Enum.product()
   end
 
   def basin({v, {x, y}} = low_point) do
@@ -175,7 +178,7 @@ defmodule Day9 do
       # find upstream except 9
       |> Enum.filter(&(elem(&1, 0) != 9 and elem(&1, 0) >= v + 1))
 
-    [low_point] ++ Enum.flat_map(up_ones, &basin/1)
+    [low_point | Enum.flat_map(up_ones, &basin/1)]
   end
 end
 
