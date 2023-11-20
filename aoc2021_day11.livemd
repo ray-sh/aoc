@@ -1,0 +1,149 @@
+# aoc2021_day11
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("input")
+```
+
+```elixir
+defmodule Day11 do
+  @display """
+  <table>
+    <tbody>
+      <%= for row <- table do %>
+        <tr>
+          <%= for {_,v} <- row do %>
+            <%=if v == 0 do %>
+                <td style="color:red"> <%= v %> </td>
+              <%else%>
+                <td> <%= v %> </td>
+            <%end%>
+          <%end%>
+        </tr>
+      <%end%>
+    </tbody>
+  </table>
+  """
+
+  def table(board) do
+    board =
+      Enum.sort(board)
+      |> Enum.chunk_every(10)
+
+    EEx.eval_string(@display, table: board)
+    |> Kino.HTML.new()
+  end
+
+  def add_1(board) do
+    for {cor, v} <- board, into: %{} do
+      {cor, Integer.mod(v + 1, 10)}
+    end
+  end
+
+  def flash(board) do
+    board
+    |> Enum.filter(&match?({_, 0}, &1))
+    |> Enum.map(&elem(&1, 0))
+    |> flash_board(board)
+  end
+
+  # Flash all 0 and update the whole board
+  def flash_board([], board), do: board
+
+  def flash_board([{x, y} | rest], %{} = board) do
+    {zero_set, board} =
+      increase_around(
+        [
+          {x + 1, y},
+          {x - 1, y},
+          {x, y + 1},
+          {x, y - 1},
+          {x - 1, y + 1},
+          {x + 1, y + 1},
+          {x - 1, y - 1},
+          {x + 1, y - 1}
+        ],
+        [],
+        board
+      )
+
+    flash_board(rest ++ zero_set, board)
+  end
+
+  # increase 1 around 0
+
+  def increase_around([], zero_set, board), do: {zero_set, board}
+
+  def increase_around([cor | rest], zero_set, board) do
+    case Map.get(board, cor) do
+      0 -> increase_around(rest, zero_set, board)
+      nil -> increase_around(rest, zero_set, board)
+      9 -> increase_around(rest, [cor | zero_set], Map.put(board, cor, 0))
+      v -> increase_around(rest, zero_set, Map.put(board, cor, v + 1))
+    end
+  end
+
+  def board(input) do
+    Kino.Input.read(input)
+    |> String.split("\n", trim: true)
+    |> Enum.map(&to_charlist/1)
+    |> Enum.with_index(fn line, row ->
+      Enum.with_index(line, fn e, colum ->
+        {{row, colum}, e - 48}
+      end)
+    end)
+    |> List.flatten()
+    |> Enum.into(%{})
+  end
+
+  def round(0, nz, board), do: {nz, board}
+
+  def round(n, nz, board) do
+    nboard = add_1(board) |> flash()
+    n_z = Map.values(nboard) |> Enum.count(&(&1 == 0))
+    round(n - 1, nz + n_z, nboard)
+  end
+
+  def part1(round, input) do
+    board = board(input)
+    {nz, board} = round(round, 0, board)
+    IO.puts("nz: #{nz}")
+    board
+  end
+
+  def part2(input) do
+    {board, n} =
+      board(input)
+      |> count_all_flash(1)
+
+    IO.puts("all flash: #{n}")
+    board
+  end
+
+  defp count_all_flash(board, n) do
+    nboard =
+      add_1(board)
+      |> flash()
+
+    Map.values(nboard)
+    |> Enum.count(&(&1 == 0))
+    |> case do
+      100 -> {nboard, n}
+      _ -> count_all_flash(nboard, n + 1)
+    end
+  end
+end
+
+Day11.part1(100, input)
+|> Day11.table()
+
+Day11.part2(input)
+|> Day11.table()
+```
