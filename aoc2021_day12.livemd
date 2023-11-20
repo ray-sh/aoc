@@ -1,0 +1,113 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# aoc2021_day12
+
+## Section
+
+```elixir
+input = "
+EG-bj
+LN-end
+bj-LN
+yv-start
+iw-ch
+ch-LN
+EG-bn
+OF-iw
+LN-yv
+iw-TQ
+iw-start
+TQ-ch
+EG-end
+bj-OF
+OF-end
+TQ-start
+TQ-bj
+iw-LN
+EG-ch
+yv-iw
+KW-bj
+OF-ch
+bj-ch
+yv-TQ
+"
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"\nEG-bj\nLN-end\nbj-LN\nyv-start\niw-ch\nch-LN\nEG-bn\nOF-iw\nLN-yv\niw-TQ\niw-start\nTQ-ch\nEG-end\nbj-OF\nOF-end\nTQ-start\nTQ-bj\niw-LN\nEG-ch\nyv-iw\nKW-bj\nOF-ch\nbj-ch\nyv-TQ\n"
+```
+
+```elixir
+defmodule Day12 do
+  @rule String.split(input, "\n", trim: true) |> Enum.map(&String.split(&1, "-"))
+
+  def part1() do
+    @rule
+  end
+
+  def day1(["end" | _] = path), do: Enum.reverse(path) |> Enum.join(",")
+
+  def day1([last | _] = path) do
+    find_next(last)
+    |> Enum.filter(fn p ->
+      big_point?(p) or (p != "start" and freque(p, path, 1))
+    end)
+    |> Enum.map(fn n ->
+      day1([n | path])
+    end)
+  end
+
+  def day2(["end" | _] = path), do: Enum.reverse(path) |> Enum.join(",")
+
+  def day2([last | _] = path) do
+    find_next(last)
+    |> Enum.filter(fn p ->
+      cond do
+        big_point?(p) -> true
+        p == "start" -> false
+        has_two_small_point?(path) -> freque(p, path, 1)
+        true -> freque(p, path, 2)
+      end
+    end)
+    |> Enum.map(fn n ->
+      day2([n | path])
+    end)
+  end
+
+  def has_two_small_point?(path) do
+    Enum.frequencies(path)
+    |> Enum.filter(fn {k, v} ->
+      k != "start" and not big_point?(k) and v == 2
+    end)
+    |> length()
+    |> Kernel.>(0)
+  end
+
+  def find_next(start) do
+    (Enum.filter(@rule, &match?([^start, _], &1))
+     |> Enum.map(&List.last/1)) ++
+      (Enum.filter(@rule, &match?([_, ^start], &1))
+       |> Enum.map(&List.first/1))
+  end
+
+  def big_point?(point) do
+    (to_charlist(point) |> hd()) in ?A..?Z
+  end
+
+  def freque(point, path, max_fre) do
+    Enum.count(path, &(&1 == point)) < max_fre
+  end
+end
+
+Day12.day2(["start"])
+|> List.flatten()
+|> length()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+148962
+```
