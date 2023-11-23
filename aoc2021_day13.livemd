@@ -1,0 +1,104 @@
+# aoc2031_13
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.3"}
+])
+```
+
+## Section
+
+```elixir
+input = Kino.Input.textarea("input")
+```
+
+```elixir
+input =
+  Kino.Input.read(input)
+  |> String.split("\n", trim: true)
+```
+
+```elixir
+{points, rules} =
+  Enum.reduce(input, {[], []}, fn x, {points, rules} ->
+    if String.starts_with?(x, "fold") do
+      "fold along " <> rule = x
+      {points, [rule | rules]}
+    else
+      point =
+        String.split(x, ",") |> Enum.map(fn v -> String.to_integer(v) end) |> List.to_tuple()
+
+      {[point | points], rules}
+    end
+  end)
+```
+
+```elixir
+defmodule Day13 do
+  @display """
+  <table>
+    <tbody>
+      <%= for row <- -20..25 do %>
+        <tr>
+          <%= for col <- -10..25 do %>
+            <%=if {row,col} in table do %>
+                <td style="color:red"> # </td>
+              <%else%>
+                <td> - </td>
+            <%end%>
+          <%end%>
+        </tr>
+      <%end%>
+    </tbody>
+  </table>
+  """
+
+  def table(board) do
+    EEx.eval_string(@display, table: board)
+    |> Kino.HTML.new()
+  end
+
+  def fold(points, "y=" <> p) do
+    p = String.to_integer(p)
+
+    (for {x, y} <- points, y > p do
+       {x, 2 * p - y}
+     end ++
+       for {x, y} <- points, y < p do
+         {x, y}
+       end)
+    |> Enum.uniq()
+  end
+
+  def fold(points, "x=" <> p) do
+    p = String.to_integer(p)
+
+    (for {x, y} <- points, x > p do
+       {2 * p - x, y}
+     end ++
+       for {x, y} <- points, x < p do
+         {x, y}
+       end)
+    |> Enum.uniq()
+  end
+
+  def result(points, rules) when is_list(rules) do
+    Enum.reduce(rules, points, fn rule, points ->
+      fold(points, rule)
+    end)
+  end
+
+  def mirro(points, m) do
+    for {x, y} <- points do
+      {2 * m - x, y}
+    end
+  end
+end
+
+rules = Enum.reverse(rules)
+Day13.fold(points, hd(rules)) |> length()
+
+Day13.result(points, rules)
+|> Day13.mirro(10)
+|> Day13.table()
+```
